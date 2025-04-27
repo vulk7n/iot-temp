@@ -1,0 +1,262 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+:root {
+    --bg-color: #1a1a2e; /* Dark blue/purple background */
+    --card-bg-color: rgba(255, 255, 255, 0.08); /* Slightly transparent white */
+    --text-color: #e0e0fc; /* Light lavender text */
+    --primary-color: #9d8eee; /* Purple accent */
+    --secondary-color: #f0a5a5; /* Soft pink accent */
+    --border-color: rgba(255, 255, 255, 0.2);
+    --offline-color: #ff6b6b;
+    --online-color: #63e6be;
+    --fan-on-color: var(--online-color);
+    --fan-off-color: var(--offline-color);
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --blur-intensity: 8px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Align top */
+    background-image: linear-gradient(to bottom right, var(--bg-color), #2a2a4e);
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+h1 {
+    text-align: center;
+    color: white;
+    margin-bottom: 30px;
+    font-weight: 600;
+    text-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.status-bar {
+    margin-bottom: 20px;
+    padding: 10px 15px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    font-size: 0.9em;
+}
+
+.status-indicator {
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: 600;
+}
+
+.status-indicator.offline {
+    background-color: var(--offline-color);
+    color: #fff;
+}
+.status-indicator.online {
+    background-color: var(--online-color);
+    color: #333;
+}
+
+
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.card {
+    padding: 25px;
+    border-radius: 15px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 20px var(--shadow-color);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* Glassmorphism Effect */
+.glass {
+    background: var(--card-bg-color);
+    backdrop-filter: blur(var(--blur-intensity));
+    -webkit-backdrop-filter: blur(var(--blur-intensity)); /* Safari */
+}
+
+.card h2 {
+    margin-bottom: 20px;
+    color: white;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.current-readings .reading {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 1.1em;
+}
+
+.reading .label {
+    font-weight: 300;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+.reading .value {
+    font-weight: 600;
+    color: white;
+}
+
+#fan-status.status-on {
+    color: var(--fan-on-color);
+}
+#fan-status.status-off {
+    color: var(--fan-off-color);
+}
+
+
+/* Controls */
+.controls .control-group {
+    margin-bottom: 20px;
+}
+
+.controls label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 400;
+    color: var(--text-color);
+    opacity: 0.9;
+}
+
+.input-button-group {
+    display: flex;
+    gap: 10px;
+}
+
+.controls input[type="number"] {
+    flex-grow: 1;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 1em;
+    outline: none;
+}
+/* Hide number input arrows */
+.controls input[type="number"]::-webkit-outer-spin-button,
+.controls input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.controls input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+
+.controls button {
+    padding: 10px 18px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    font-size: 0.9em;
+}
+
+.controls button:hover {
+    background-color: #8a7acc; /* Darker purple */
+}
+.controls button:active {
+     transform: scale(0.98);
+}
+
+.current-threshold {
+    font-size: 0.9em;
+    margin-top: 10px;
+    display: block;
+    opacity: 0.8;
+}
+
+.fan-controls .button-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+}
+
+.fan-controls button {
+     background-color: var(--secondary-color); /* Different color for fan buttons */
+}
+.fan-controls button:hover {
+     background-color: #e08a8a;
+}
+
+/* History Chart */
+.history-chart {
+    grid-column: 1 / -1; /* Make chart span full width */
+}
+
+#sensorChart {
+    max-height: 350px;
+    width: 100%;
+}
+
+#refresh-history-btn {
+     display: block;
+     margin: 15px auto 0 auto; /* Center the button */
+     padding: 8px 15px;
+     background-color: var(--primary-color);
+     opacity: 0.8;
+     color: white;
+     border: none;
+     border-radius: 5px;
+     cursor: pointer;
+     transition: opacity 0.3s ease;
+}
+#refresh-history-btn:hover {
+     opacity: 1.0;
+}
+
+
+/* Error Message */
+.error-msg {
+    color: var(--offline-color);
+    margin-top: 15px;
+    font-weight: bold;
+    font-size: 0.9em;
+    text-align: center;
+    min-height: 1.2em; /* Reserve space */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .dashboard {
+        grid-template-columns: 1fr; /* Stack cards on smaller screens */
+    }
+    h1 {
+        font-size: 1.8em;
+    }
+    .card {
+         padding: 20px;
+    }
+}
