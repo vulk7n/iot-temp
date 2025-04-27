@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cold Storage Monitor</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Include Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@2.3.0/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.1.0/dist/chartjs-adapter-luxon.min.js"></script>
+
+</head>
+<body>
+    <div class="container">
+        <h1>Cold Storage Monitor</h1>
+
+        <div class="grid-container">
+            <!-- Live Data Card -->
+            <div class="card glass">
+                <h2>Live Status</h2>
+                <div class="live-data">
+                    <p>Temperature: <span id="temp">--</span> °C</p>
+                    <p>Humidity: <span id="humidity">--</span> %</p>
+                    <p>Fan Status: <span id="fan-status" class="status-off">OFF</span></p>
+                    <p>Mode: <span id="mode">--</span></p>
+                    <p>Last Update: <span id="last-update">--</span></p>
+                </div>
+            </div>
+
+            <!-- Controls Card -->
+            <div class="card glass">
+                <h2>Controls & Settings</h2>
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="target-temp">Target Temperature (°C):</label>
+                        <input type="number" id="target-temp" step="0.1" value="25.0">
+                    </div>
+                     <div class="control-group switch-container">
+                        <label for="manual-mode">Manual Mode:</label>
+                        <label class="switch">
+                            <input type="checkbox" id="manual-mode">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                     <div class="control-group switch-container" id="manual-fan-control-group" style="display: none;">
+                        <label for="manual-fan-state">Manual Fan Control:</label>
+                         <label class="switch">
+                            <input type="checkbox" id="manual-fan-state">
+                            <span class="slider round"></span>
+                         </label>
+                         <span id="manual-fan-label">(Currently OFF)</span>
+                    </div>
+                    <button id="save-config" class="btn">Save Configuration</button>
+                    <p id="config-status" class="status-message"></p>
+                </div>
+            </div>
+
+            <!-- Chart Card -->
+            <div class="card glass chart-card">
+                <h2>Temperature & Humidity History</h2>
+                <div class="chart-container">
+                     <canvas id="sensorChart"></canvas>
+                </div>
+                 <button id="refresh-history" class="btn btn-secondary">Refresh History</button>
+            </div>
+        </div> <!-- /grid-container -->
+
+    </div> <!-- /container -->
+
+    <script src="script.js"></script>
+</body>
+</html>
