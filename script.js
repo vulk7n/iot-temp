@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Replace with your actual Flask server URL (must be HTTPS if Cloudflare Pages is HTTPS)
     const API_BASE_URL = 'https://flask.vlkn.in/api'; // Use /api prefix for web endpoints
     const DATA_FETCH_INTERVAL = 5000; // Fetch latest data every 5 seconds (ms)
-    const HISTORY_FETCH_INTERVAL = 60000; // Fetch history every 60 seconds (ms)
+    const HISTORY_FETCH_INTERVAL = 15000; // Fetch history every 60 seconds (ms)
 
     // --- DOM Elements ---
     const tempEl = document.getElementById('temp');
