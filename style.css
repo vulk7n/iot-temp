@@ -1,20 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
-
-:root {
-    --bg-color: #1a1a2e; /* Dark blue/purple background */
-    --card-bg-color: rgba(255, 255, 255, 0.08); /* Slightly transparent white */
-    --text-color: #e0e0fc; /* Light lavender text */
-    --primary-color: #9d8eee; /* Purple accent */
-    --secondary-color: #f0a5a5; /* Soft pink accent */
-    --border-color: rgba(255, 255, 255, 0.2);
-    --offline-color: #ff6b6b;
-    --online-color: #63e6be;
-    --fan-on-color: var(--online-color);
-    --fan-off-color: var(--offline-color);
-    --shadow-color: rgba(0, 0, 0, 0.2);
-    --blur-intensity: 8px;
-}
-
+/* Basic Reset & Font */
 * {
     margin: 0;
     padding: 0;
@@ -23,240 +7,249 @@
 
 body {
     font-family: 'Poppins', sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-color);
+    background: linear-gradient(to right top, #1a1a2e, #16213e, #0f3460, #1f3a70, #2a4080);
+    color: #e0e0e0;
     line-height: 1.6;
-    padding: 20px;
     min-height: 100vh;
+    padding: 20px;
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* Align top */
-    background-image: linear-gradient(to bottom right, var(--bg-color), #2a2a4e);
+    align-items: flex-start; /* Align items to the top */
 }
 
 .container {
     width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
+    max-width: 1200px; /* Adjust as needed */
+    padding: 20px;
 }
 
 h1 {
     text-align: center;
-    color: white;
     margin-bottom: 30px;
+    color: #ffffff;
     font-weight: 600;
-    text-shadow: 0 2px 4px var(--shadow-color);
+    letter-spacing: 1px;
 }
 
-.status-bar {
-    margin-bottom: 20px;
-    padding: 10px 15px;
-    border-radius: 8px;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    font-size: 0.9em;
+h2 {
+    margin-bottom: 15px;
+    color: #f0f0f0;
+    font-weight: 400;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 8px;
 }
 
-.status-indicator {
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-weight: 600;
-}
-
-.status-indicator.offline {
-    background-color: var(--offline-color);
-    color: #fff;
-}
-.status-indicator.online {
-    background-color: var(--online-color);
-    color: #333;
-}
-
-
-.dashboard {
+/* Grid Layout */
+.grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive columns */
     gap: 25px;
 }
 
+/* Glassmorphism Card */
 .card {
-    padding: 25px;
+    background: rgba(255, 255, 255, 0.08); /* Slightly transparent white */
     border-radius: 15px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 8px 20px var(--shadow-color);
+    padding: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37); /* Subtle shadow */
+    backdrop-filter: blur(10px); /* The blur effect */
+    -webkit-backdrop-filter: blur(10px); /* For Safari */
     transition: transform 0.3s ease;
 }
 
-.card:hover {
+/* Hover effect for cards (optional) */
+/* .card:hover {
     transform: translateY(-5px);
-}
+} */
 
-/* Glassmorphism Effect */
-.glass {
-    background: var(--card-bg-color);
-    backdrop-filter: blur(var(--blur-intensity));
-    -webkit-backdrop-filter: blur(var(--blur-intensity)); /* Safari */
-}
-
-.card h2 {
-    margin-bottom: 20px;
-    color: white;
-    font-weight: 600;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 10px;
-}
-
-.current-readings .reading {
-    display: flex;
-    justify-content: space-between;
+.live-data p, .controls .control-group {
     margin-bottom: 12px;
-    font-size: 1.1em;
+    font-size: 1rem;
 }
 
-.reading .label {
-    font-weight: 300;
-    color: var(--text-color);
-    opacity: 0.8;
-}
-
-.reading .value {
+.live-data span, #manual-fan-label {
     font-weight: 600;
-    color: white;
+    color: #ffffff;
 }
 
-#fan-status.status-on {
-    color: var(--fan-on-color);
-}
-#fan-status.status-off {
-    color: var(--fan-off-color);
-}
-
-
-/* Controls */
-.controls .control-group {
-    margin-bottom: 20px;
+/* Status Indicators */
+.status-on {
+    color: #4CAF50; /* Green */
+    font-weight: bold;
 }
 
+.status-off {
+    color: #ff6b6b; /* Red */
+    font-weight: bold;
+}
+
+/* Controls Styling */
 .controls label {
     display: block;
-    margin-bottom: 8px;
-    font-weight: 400;
-    color: var(--text-color);
-    opacity: 0.9;
-}
-
-.input-button-group {
-    display: flex;
-    gap: 10px;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    color: #c0c0c0;
 }
 
 .controls input[type="number"] {
-    flex-grow: 1;
-    padding: 10px;
+    width: 100px;
+    padding: 8px 10px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     background-color: rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    color: var(--text-color);
-    font-size: 1em;
+    color: #e0e0e0;
+    font-size: 1rem;
+}
+
+.controls input[type="number"]:focus {
     outline: none;
-}
-/* Hide number input arrows */
-.controls input[type="number"]::-webkit-outer-spin-button,
-.controls input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.controls input[type="number"] {
-  -moz-appearance: textfield; /* Firefox */
+    border-color: #5a9afa;
+    box-shadow: 0 0 5px rgba(90, 154, 250, 0.5);
 }
 
-
-.controls button {
-    padding: 10px 18px;
-    background-color: var(--primary-color);
-    color: white;
+/* Button Styling */
+.btn {
+    display: inline-block;
+    background-color: #5a9afa;
+    color: #ffffff;
     border: none;
-    border-radius: 8px;
+    padding: 10px 20px;
+    border-radius: 20px; /* Rounded buttons */
     cursor: pointer;
+    font-size: 0.95rem;
     font-weight: 600;
-    transition: background-color 0.3s ease, transform 0.1s ease;
-    font-size: 0.9em;
-}
-
-.controls button:hover {
-    background-color: #8a7acc; /* Darker purple */
-}
-.controls button:active {
-     transform: scale(0.98);
-}
-
-.current-threshold {
-    font-size: 0.9em;
+    transition: background-color 0.3s ease, transform 0.2s ease;
     margin-top: 10px;
-    display: block;
-    opacity: 0.8;
 }
 
-.fan-controls .button-group {
+.btn:hover {
+    background-color: #4a80d0;
+    transform: translateY(-2px);
+}
+
+.btn:active {
+     transform: translateY(0px);
+}
+
+.btn-secondary {
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-secondary:hover {
+     background-color: rgba(255, 255, 255, 0.25);
+}
+
+
+/* Toggle Switch Styling */
+.switch-container {
     display: flex;
-    gap: 10px;
-    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+    align-items: center;
+    gap: 10px; /* Space between label and switch */
 }
 
-.fan-controls button {
-     background-color: var(--secondary-color); /* Different color for fan buttons */
-}
-.fan-controls button:hover {
-     background-color: #e08a8a;
-}
-
-/* History Chart */
-.history-chart {
-    grid-column: 1 / -1; /* Make chart span full width */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px; /* Smaller switch */
+  height: 24px; /* Smaller switch */
 }
 
-#sensorChart {
-    max-height: 350px;
-    width: 100%;
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
 }
 
-#refresh-history-btn {
-     display: block;
-     margin: 15px auto 0 auto; /* Center the button */
-     padding: 8px 15px;
-     background-color: var(--primary-color);
-     opacity: 0.8;
-     color: white;
-     border: none;
-     border-radius: 5px;
-     cursor: pointer;
-     transition: opacity 0.3s ease;
-}
-#refresh-history-btn:hover {
-     opacity: 1.0;
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  transition: .4s;
 }
 
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px; /* Smaller handle */
+  width: 18px; /* Smaller handle */
+  left: 3px;   /* Adjust position */
+  bottom: 3px; /* Adjust position */
+  background-color: white;
+  transition: .4s;
+}
 
-/* Error Message */
-.error-msg {
-    color: var(--offline-color);
-    margin-top: 15px;
-    font-weight: bold;
+input:checked + .slider {
+  background-color: #4CAF50; /* Green when ON */
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #4CAF50;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px); /* Adjust movement distance */
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 24px; /* Fully rounded */
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+#manual-fan-label {
     font-size: 0.9em;
-    text-align: center;
-    min-height: 1.2em; /* Reserve space */
+    color: #aaa;
 }
 
-/* Responsive adjustments */
+
+/* Status Message */
+.status-message {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    height: 1.2em; /* Reserve space to prevent layout shift */
+}
+.status-message.success {
+    color: #4CAF50;
+}
+.status-message.error {
+    color: #ff6b6b;
+}
+
+/* Chart Container */
+.chart-card {
+    grid-column: span 2; /* Make chart wider on larger screens */
+}
+.chart-container {
+    position: relative;
+    height: 300px; /* Adjust height as needed */
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+/* Responsive Adjustments */
 @media (max-width: 768px) {
-    .dashboard {
+    .grid-container {
         grid-template-columns: 1fr; /* Stack cards on smaller screens */
     }
-    h1 {
-        font-size: 1.8em;
+    .chart-card {
+        grid-column: span 1; /* Reset span */
     }
-    .card {
-         padding: 20px;
+    body {
+        padding: 10px;
+    }
+    .container {
+        padding: 10px;
+    }
+    h1 {
+        font-size: 1.8rem;
     }
 }
