@@ -6,77 +6,139 @@
     <title>Cold Storage Sentinel</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Optional: Favicon -->
+    <!-- <link rel="icon" href="favicon.png" type="image/png"> -->
 </head>
 <body>
+    <div class="marquee-container">
+        <div class="marquee-text">
+            <span>Made with ❤️ by Vaigra & Shubham</span>
+            <span>❄️ Cold Storage Sentinel ❄️</span>
+            <span>Monitoring Temperature & Humidity</span>
+            <span>Real-time ESP8266 IoT Project</span>
+            <span>Made with ❤️ by Vaigra & Shubham</span> <!-- Repeat for seamless loop -->
+            <span>❄️ Cold Storage Sentinel ❄️</span>
+            <span>Monitoring Temperature & Humidity</span>
+            <span>Real-time ESP8266 IoT Project</span>
+        </div>
+    </div>
+
     <div class="container">
         <header>
             <h1>Cold Storage Sentinel</h1>
         </header>
 
         <main>
-            <section class="card status-overview">
-                <h2>Live Status</h2>
-                <div class="status-grid">
-                    <div>Temperature: <span id="temp-value">--</span> °C</div>
-                    <div>Humidity: <span id="humidity-value">--</span> %</div>
-                    <div>Fan Actual: <span id="fan-actual-status">--</span></div>
-                    <div>Fan Control: <span id="fan-control-mode">AUTO</span></div>
-                    <div>Last Update: <span id="last-update">--</span></div>
-                </div>
-                <div class="live-diagram">
-                    <h3>System Diagram</h3>
-                    <div class="component esp">ESP8266 <span class="status-dot" id="esp-dot"></span></div>
-                    <div class="arrow esp-to-flask" id="arrow-esp-flask">→</div>
-                    <div class="component flask">Flask Server <span class="status-dot" id="flask-dot"></span></div>
-                    <div class="arrow flask-to-supabase" id="arrow-flask-supabase">→</div>
-                    <div class="arrow flask-to-web" id="arrow-flask-web">←</div> <!-- Data from Flask to Web -->
-                    <div class="arrow web-to-flask" id="arrow-web-flask">→</div> <!-- Control from Web to Flask -->
-                    <div class="component supabase">Supabase DB <span class="status-dot" id="supabase-dot"></span></div>
-                    <div class="component web">Website UI <span class="status-dot" id="web-dot"></span></div>
-                </div>
-            </section>
-
-            <section class="card controls">
-                <h2>Controls</h2>
-                <div>
-                    <label for="fan-threshold">Auto Fan Threshold (°C):</label>
-                    <input type="number" id="fan-threshold" step="0.1" value="25.0">
-                </div>
-                <div>
-                    <label for="rgb-brightness">RGB Brightness (0-255):</label>
-                    <input type="number" id="rgb-brightness" min="0" max="255" step="1" value="50">
-                </div>
-                <button id="update-base-config-btn">Update Auto/RGB Config</button>
-                <p id="base-config-message"></p>
-
-                <div class="manual-fan-controls">
-                    <h3>Manual Fan Control</h3>
-                    <div class="switch-container">
-                        <label for="manual-fan-mode-toggle" class="manual-mode-label">Manual Mode:</label>
-                        <label class="switch">
-                            <input type="checkbox" id="manual-fan-mode-toggle">
-                            <span class="slider round"></span>
-                        </label>
+            <div class="grid-container">
+                <section class="card status-card">
+                    <h2>Live Status</h2>
+                    <div class="status-item">
+                        <span class="label">Temperature:</span>
+                        <span class="value" id="temp-value">-- °C</span>
                     </div>
-                    <div id="manual-fan-buttons" style="display: none;"> <!-- Initially hidden -->
-                        <button class="toggle-button" id="manual-fan-on-btn">Set Fan ON</button>
-                        <button class="toggle-button" id="manual-fan-off-btn">Set Fan OFF</button>
+                    <div class="status-item">
+                        <span class="label">Humidity:</span>
+                        <span class="value" id="humidity-value">-- %</span>
                     </div>
-                    <p id="manual-fan-message"></p>
-                </div>
-            </section>
+                    <div class="status-item">
+                        <span class="label">Fan (Actual):</span>
+                        <span class="value" id="fan-actual-status">--</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">Fan Control:</span>
+                        <span class="value" id="fan-control-mode">AUTO</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">Last Update:</span>
+                        <span class="value small" id="last-update">--</span>
+                    </div>
+                </section>
 
-            <section class="card charts">
-                <h2>Historical Data</h2>
-                <canvas id="tempHumidityChart"></canvas>
-            </section>
+                <section class="card diagram-card">
+                    <h2>System Flow</h2>
+                    <div class="live-diagram">
+                        <div class="diagram-column">
+                            <div class="node esp" id="node-esp">
+                                <span class="node-icon">📡</span>ESP8266
+                                <div class="status-dot" id="esp-dot"></div>
+                            </div>
+                            <div class="flow-arrow-vertical">
+                                <div class="arrow data-up" id="arrow-esp-flask-up">↑</div> <!-- Data to Flask -->
+                                <div class="arrow config-down" id="arrow-flask-esp-down">↓</div> <!-- Config to ESP -->
+                            </div>
+                            <div class="node flask" id="node-flask">
+                                <span class="node-icon">⚙️</span>Flask Server
+                                <div class="status-dot" id="flask-dot"></div>
+                            </div>
+                        </div>
+
+                        <div class="diagram-column central-column"> <!-- Added for clarity on wider screens -->
+                             <div class="flow-arrow-horizontal connect-flask-db">
+                                <div class="arrow data-right" id="arrow-flask-db-right">→</div> <!-- Data to DB -->
+                            </div>
+                            <div class="flow-arrow-horizontal connect-flask-web">
+                                 <div class="arrow data-left" id="arrow-web-flask-left">←</div> <!-- Control from Web -->
+                                 <div class="arrow data-right" id="arrow-flask-web-right">→</div> <!-- Data to Web -->
+                            </div>
+                        </div>
+
+                        <div class="diagram-column">
+                            <div class="node supabase" id="node-supabase">
+                                <span class="node-icon">💾</span>Supabase DB
+                                <div class="status-dot" id="supabase-dot"></div>
+                            </div>
+                             <!-- Spacer or adjust layout for web UI on mobile -->
+                            <div class="node web" id="node-web">
+                                <span class="node-icon">🖥️</span>Web UI
+                                <div class="status-dot" id="web-dot"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card controls-card">
+                    <h2>Controls</h2>
+                    <div class="control-group">
+                        <label for="fan-threshold">Auto Threshold (°C)</label>
+                        <input type="number" id="fan-threshold" step="0.1" value="25.0">
+                    </div>
+                    <div class="control-group">
+                        <label for="rgb-brightness">RGB Brightness</label>
+                        <input type="number" id="rgb-brightness" min="0" max="255" step="1" value="50">
+                    </div>
+                    <button id="update-base-config-btn" class="btn">Update Auto/RGB</button>
+                    <p class="message" id="base-config-message"></p>
+
+                    <div class="manual-fan-controls">
+                        <h3>Manual Fan</h3>
+                        <div class="switch-container">
+                            <label for="manual-fan-mode-toggle" class="manual-mode-label">Manual Mode</label>
+                            <label class="switch">
+                                <input type="checkbox" id="manual-fan-mode-toggle">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <div id="manual-fan-buttons" class="manual-buttons-container" style="display: none;">
+                            <button class="btn btn-fan" id="manual-fan-on-btn">Set Fan ON</button>
+                            <button class="btn btn-fan" id="manual-fan-off-btn">Set Fan OFF</button>
+                        </div>
+                        <p class="message" id="manual-fan-message"></p>
+                    </div>
+                </section>
+
+                <section class="card chart-card">
+                    <h2>History</h2>
+                    <div class="chart-wrapper">
+                        <canvas id="tempHumidityChart"></canvas>
+                    </div>
+                </section>
+            </div>
         </main>
 
         <footer>
-            <p>© 2023 Cold Storage Sentinel</p>
+            <p>© 2023-2024 Cold Storage Sentinel Project</p>
         </footer>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>

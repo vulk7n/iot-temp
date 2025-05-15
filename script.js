@@ -16,11 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     manualModeToggle.addEventListener('change', () => {
         const isManualModeActive = manualModeToggle.checked;
-        manualFanButtonsDiv.style.display = isManualModeActive ? 'flex' : 'none'; // Use flex for button layout
-        // When toggling manual mode, send current intended fan state if activating, or just deactivate
+        manualFanButtonsDiv.style.display = isManualModeActive ? 'flex' : 'none';
         let targetFanState = null; 
         if (isManualModeActive) {
-            // When turning manual ON, default to current *actual* fan state if known, else OFF
             const fanActualElement = document.getElementById('fan-actual-status');
             targetFanState = fanActualElement.textContent.toUpperCase().includes('ON');
         }
@@ -28,10 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('manual-fan-on-btn').addEventListener('click', () => {
-        sendManualFanSettings(true, true); // Manual active, fan ON
+        sendManualFanSettings(true, true);
     });
     document.getElementById('manual-fan-off-btn').addEventListener('click', () => {
-        sendManualFanSettings(true, false); // Manual active, fan OFF
+        sendManualFanSettings(true, false);
     });
 });
 
@@ -41,9 +39,16 @@ function getApiUrl(endpoint) {
 
 function displayMessage(elementId, text, type = 'success') {
     const el = document.getElementById(elementId);
+    if (!el) return;
     el.textContent = text;
-    el.className = type === 'success' ? 'message-success' : 'message-error';
-    setTimeout(() => { el.textContent = ''; el.className = ''; }, 4000);
+    el.className = 'message'; // Reset class
+    if (type === 'success') el.classList.add('message-success');
+    else el.classList.add('message-error');
+    
+    setTimeout(() => { 
+        el.textContent = ''; 
+        el.className = 'message';
+    }, 4000);
 }
 
 async function fetchLatestDataAndUpdateUI() {
@@ -54,30 +59,24 @@ async function fetchLatestDataAndUpdateUI() {
         }
         const data = await response.json();
 
-        // Update sensor readings
         const reading = data.latest_reading;
-        document.getElementById('temp-value').textContent = reading.temperature !== null ? parseFloat(reading.temperature).toFixed(1) : '--';
-        document.getElementById('humidity-value').textContent = reading.humidity !== null ? parseFloat(reading.humidity).toFixed(1) : '--';
+        document.getElementById('temp-value').textContent = reading.temperature !== null ? `${parseFloat(reading.temperature).toFixed(1)} °C` : '-- °C';
+        document.getElementById('humidity-value').textContent = reading.humidity !== null ? `${parseFloat(reading.humidity).toFixed(1)} %` : '-- %';
         document.getElementById('fan-actual-status').textContent = reading.fan_on ? 'ON' : 'OFF';
         document.getElementById('last-update').textContent = reading.timestamp ? new Date(reading.timestamp).toLocaleString() : '--';
 
-        // Update control inputs only if they haven't changed or are not focused
         const currentConfig = data.current_config;
         if (JSON.stringify(currentConfig) !== JSON.stringify(lastFetchedConfig)) {
             updateControlInputs(currentConfig);
             lastFetchedConfig = { ...currentConfig };
         }
         
-        // Update fan control mode display
         document.getElementById('fan-control-mode').textContent = currentConfig.manual_fan_control_active ? `MANUAL (${currentConfig.manual_fan_target_state ? 'ON' : 'OFF'})` : 'AUTO';
-
-        // Update live diagram
         updateDiagramStatus(data.esp_status, data.flask_status, data.supabase_status, reading.timestamp);
 
     } catch (error) {
         console.error("Error fetching latest data:", error);
-        document.getElementById('temp-value').textContent = 'Err';
-        // Potentially update diagram to show server/connection error
+        document.getElementById('temp-value').textContent = 'Error';
         updateDiagramStatus('unknown', 'offline', 'unknown', null);
     }
 }
@@ -94,11 +93,12 @@ function updateControlInputs(config) {
     }
 
     const manualModeToggle = document.getElementById('manual-fan-mode-toggle');
-    if (document.activeElement !== manualModeToggle) {
+    if (document.activeElement !== manualModeToggle) { // Avoid clobbering user interaction
+      if (manualModeToggle.checked !== config.manual_fan_control_active) {
         manualModeToggle.checked = config.manual_fan_control_active;
+      }
     }
     document.getElementById('manual-fan-buttons').style.display = config.manual_fan_control_active ? 'flex' : 'none';
-    
     updateManualFanButtonActiveState(config.manual_fan_control_active, config.manual_fan_target_state);
 }
 
@@ -129,9 +129,10 @@ async function updateBaseConfiguration() {
             }),
         });
         const result = await response.json();
-        if (response.ok) {
+        if (response.ok && result.current_config) { // Check for current_config in response
             displayMessage('base-config-message', 'Auto/RGB Config updated!', 'success');
-            lastFetchedConfig = { ...lastFetchedConfig, ...result.current_config }; // Update local cache
+            lastFetchedConfig = { ...lastFetchedConfig, ...result.current_config };
+            updateControlInputs(result.current_config); // Explicitly update inputs
         } else {
             displayMessage('base-config-message', `Error: ${result.error || 'Unknown error'}`, 'error');
         }
@@ -141,13 +142,10 @@ async function updateBaseConfiguration() {
 }
 
 async function sendManualFanSettings(manualControlActive, manualFanTargetState) {
-    // manualFanTargetState is true for ON, false for OFF.
-    // If manualControlActive is false, manualFanTargetState's value is less critical for this call but good to send.
     displayMessage('manual-fan-message', 'Sending fan command...', 'success');
-
     const payload = { 
         manual_control_active: manualControlActive,
-        manual_fan_state: manualFanTargetState === null ? false : manualFanTargetState // Send a boolean for state
+        manual_fan_state: manualFanTargetState === null ? false : manualFanTargetState
     };
 
     try {
@@ -159,12 +157,10 @@ async function sendManualFanSettings(manualControlActive, manualFanTargetState) 
         const result = await response.json();
         if (response.ok) {
             displayMessage('manual-fan-message', 'Fan command sent!', 'success');
-            // Update UI based on what was sent, Flask will confirm actual state later
             updateManualFanButtonActiveState(result.manual_fan_control_active, result.manual_fan_target_state);
             document.getElementById('fan-control-mode').textContent = result.manual_fan_control_active ? `MANUAL (${result.manual_fan_target_state ? 'ON' : 'OFF'})` : 'AUTO';
             lastFetchedConfig.manual_fan_control_active = result.manual_fan_control_active;
             lastFetchedConfig.manual_fan_target_state = result.manual_fan_target_state;
-
         } else {
             displayMessage('manual-fan-message', `Error: ${result.error || 'Unknown error'}`, 'error');
         }
@@ -175,44 +171,64 @@ async function sendManualFanSettings(manualControlActive, manualFanTargetState) 
 
 function initChart() {
     const ctx = document.getElementById('tempHumidityChart').getContext('2d');
-    Chart.defaults.color = '#bdc3c7'; 
-    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+    Chart.defaults.color = '#b0bac8'; 
+    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.08)';
 
     tempHumidityChart = new Chart(ctx, {
         type: 'line',
-        data: { labels: [], datasets: [ /* ... as before ... */ ] },
-        options: { /* ... as before, ensure dark theme colors ... */ }
-    });
-    // Copied from previous detailed JS for chart config:
-    tempHumidityChart.data = {
-        labels: [],
-        datasets: [
-            {
-                label: 'Temperature (°C)', data: [], borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.2)',
-                tension: 0.2, yAxisID: 'yTemp', pointRadius: 2, pointBackgroundColor: '#e74c3c'
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'Temperature (°C)', data: [], borderColor: '#f87171', backgroundColor: 'rgba(248, 113, 113, 0.2)',
+                    tension: 0.3, yAxisID: 'yTemp', pointRadius: 2, pointBackgroundColor: '#f87171', borderWidth: 1.5
+                },
+                {
+                    label: 'Humidity (%)', data: [], borderColor: '#60a5fa', backgroundColor: 'rgba(96, 165, 250, 0.2)',
+                    tension: 0.3, yAxisID: 'yHumidity', pointRadius: 2, pointBackgroundColor: '#60a5fa', borderWidth: 1.5
+                }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { 
+                legend: { labels: { color: '#e4e8f0', font: { size: 13 } } },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 17, 19, 0.85)', // Darker tooltip
+                    titleFont: { size: 13 },
+                    bodyFont: { size: 12 },
+                    padding: 10,
+                    borderColor: '#2a2f36',
+                    borderWidth: 1
+                }
             },
-            {
-                label: 'Humidity (%)', data: [], borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.2)',
-                tension: 0.2, yAxisID: 'yHumidity', pointRadius: 2, pointBackgroundColor: '#3498db'
+            scales: {
+                yTemp: { 
+                    type: 'linear', display: true, position: 'left', 
+                    title: { display: true, text: 'Temp (°C)', color: '#b0bac8', font: {size: 12} }, 
+                    ticks: { color: '#8a9bb1', font: {size: 11} }, 
+                    grid: { color: 'rgba(255,255,255,0.06)' } 
+                },
+                yHumidity: { 
+                    type: 'linear', display: true, position: 'right', 
+                    title: { display: true, text: 'Humidity (%)', color: '#b0bac8', font: {size: 12} }, 
+                    ticks: { color: '#8a9bb1', font: {size: 11} }, 
+                    grid: { drawOnChartArea: false } 
+                },
+                x: { 
+                    title: { display: true, text: 'Time', color: '#b0bac8', font: {size: 12} }, 
+                    ticks: { color: '#8a9bb1', font: {size: 11}, maxRotation: 0, autoSkipPadding: 25 }, 
+                    grid: { color: 'rgba(255,255,255,0.04)' } 
+                }
             }
-        ]
-    };
-    tempHumidityChart.options = {
-        responsive: true, maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { labels: { color: '#ecf0f1' } } },
-        scales: {
-            yTemp: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Temp (°C)', color: '#ecf0f1' }, ticks: { color: '#bdc3c7' }, grid: { color: 'rgba(255,255,255,0.08)' } },
-            yHumidity: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Humidity (%)', color: '#ecf0f1' }, ticks: { color: '#bdc3c7' }, grid: { drawOnChartArea: false } },
-            x: { title: { display: true, text: 'Time', color: '#ecf0f1' }, ticks: { color: '#bdc3c7', maxRotation: 0, autoSkipPadding: 20 }, grid: { color: 'rgba(255,255,255,0.05)' } }
         }
-    };
-    tempHumidityChart.update();
+    });
 }
 
 async function fetchHistoricalData() {
     try {
-        const response = await fetch(getApiUrl('/api/historical_data?limit=120')); // Fetch more data points
+        const response = await fetch(getApiUrl('/api/historical_data?limit=120'));
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
 
@@ -223,7 +239,7 @@ async function fetchHistoricalData() {
         tempHumidityChart.data.labels = labels;
         tempHumidityChart.data.datasets[0].data = tempData;
         tempHumidityChart.data.datasets[1].data = humidityData;
-        tempHumidityChart.update('none'); // 'none' for no animation, smoother update for live charts
+        tempHumidityChart.update('none');
 
     } catch (error) {
         console.error("Error fetching historical data:", error);
@@ -234,12 +250,12 @@ function updateDiagramStatus(espStatus, flaskStatus, supabaseStatus, lastEspData
     const setDot = (id, status) => {
         const dotEl = document.getElementById(id);
         if (!dotEl) return;
-        dotEl.className = 'status-dot'; // Reset
+        dotEl.className = 'status-dot';
         if (status === 'online') dotEl.classList.add('online');
         else if (status === 'offline') dotEl.classList.add('offline');
-        else dotEl.classList.add('degraded'); // For 'unknown' or error states
+        else dotEl.classList.add('degraded');
     };
-    const setArrow = (id, active) => {
+    const setArrowActive = (id, active) => {
         const arrowEl = document.getElementById(id);
         if (!arrowEl) return;
         arrowEl.classList.toggle('active', active);
@@ -248,16 +264,19 @@ function updateDiagramStatus(espStatus, flaskStatus, supabaseStatus, lastEspData
     setDot('esp-dot', espStatus);
     setDot('flask-dot', flaskStatus);
     setDot('supabase-dot', supabaseStatus);
-    setDot('web-dot', 'online'); // Website is always "online" from its own perspective
+    setDot('web-dot', 'online');
 
     let isEspDataFlowing = false;
     if (espStatus === 'online' && flaskStatus === 'online' && lastEspDataTimestamp) {
         const dataAgeSeconds = (new Date() - new Date(lastEspDataTimestamp)) / 1000;
-        if (dataAgeSeconds < 60) isEspDataFlowing = true; // Data received within last minute
+        if (dataAgeSeconds < 60 * 2 ) isEspDataFlowing = true; // Data received by Flask within last 2 mins
     }
     
-    setArrow('arrow-esp-flask', isEspDataFlowing);
-    setArrow('arrow-flask-supabase', flaskStatus === 'online' && supabaseStatus === 'online' && isEspDataFlowing); // If ESP data flows and Supabase is up
-    setArrow('arrow-flask-web', flaskStatus === 'online'); // Data from Flask to Web is generally available if Flask is up
-    setArrow('arrow-web-flask', flaskStatus === 'online'); // Control from Web to Flask is generally available if Flask is up
+    const isFlaskAbleToProcess = flaskStatus === 'online';
+
+    setArrowActive('arrow-esp-flask-up', isEspDataFlowing);
+    setArrowActive('arrow-flask-esp-down', isFlaskAbleToProcess); // Config flows if Flask is up
+    setArrowActive('arrow-flask-db-right', isEspDataFlowing && supabaseStatus === 'online');
+    setArrowActive('arrow-flask-web-right', isFlaskAbleToProcess);
+    setArrowActive('arrow-web-flask-left', isFlaskAbleToProcess);
 }
