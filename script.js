@@ -6,8 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initChart();
     fetchLatestDataAndUpdateUI(); // Initial fetch
 
-    setInterval(fetchLatestDataAndUpdateUI, 5000); // Fetch status every 5 seconds
-    setInterval(fetchHistoricalData, 45000); // Fetch chart data every 45 seconds
+    setInterval(fetchLatestDataAndUpdateUI, 3000); // Fetch status every 5 seconds
+    setInterval(fetchHistoricalData, 5000); // Fetch chart data every 45 seconds
 
     document.getElementById('update-base-config-btn').addEventListener('click', updateBaseConfiguration);
     
