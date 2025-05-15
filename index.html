@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cold Storage Sentinel</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Cold Storage Sentinel</h1>
+        </header>
+
+        <main>
+            <section class="card status-overview">
+                <h2>Live Status</h2>
+                <div class="status-grid">
+                    <div>Temperature: <span id="temp-value">--</span> °C</div>
+                    <div>Humidity: <span id="humidity-value">--</span> %</div>
+                    <div>Fan Status: <span id="fan-status">--</span></div>
+                    <div>Last Update: <span id="last-update">--</span></div>
+                </div>
+                <div class="live-diagram">
+                    <h3>System Diagram</h3>
+                    <div class="component esp">ESP8266 <span class="status-dot" id="esp-dot"></span></div>
+                    <div class="arrow esp-to-flask" id="arrow-esp-flask">→</div>
+                    <div class="component flask">Flask Server <span class="status-dot" id="flask-dot"></span></div>
+                    <div class="arrow flask-to-supabase" id="arrow-flask-supabase">→</div>
+                    <div class="arrow flask-to-web" id="arrow-flask-web">←</div>
+                    <div class="component supabase">Supabase DB <span class="status-dot" id="supabase-dot"></span></div>
+                    <div class="component web">Website <span class="status-dot" id="web-dot"></span></div>
+                </div>
+            </section>
+
+            <section class="card controls">
+                <h2>Controls</h2>
+                <div>
+                    <label for="fan-threshold">Fan Threshold (°C):</label>
+                    <input type="number" id="fan-threshold" step="0.1" value="25.0">
+                </div>
+                <div>
+                    <label for="rgb-brightness">RGB Brightness (0-255):</label>
+                    <input type="number" id="rgb-brightness" min="0" max="255" step="1" value="50">
+                </div>
+                <button id="update-config-btn">Update Configuration</button>
+                <p id="config-message"></p>
+            </section>
+
+            <section class="card charts">
+                <h2>Historical Data</h2>
+                <canvas id="tempHumidityChart"></canvas>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
