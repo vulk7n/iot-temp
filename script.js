@@ -1,3 +1,17 @@
+// --- Global Error Catcher for Debugging ---
+console.log("script.js loading...");
+window.onerror = function(message, source, lineno, colno, error) {
+  console.error("Global JS Error:", {
+    message: message,
+    source: source,
+    lineno: lineno,
+    colno: colno,
+    errorObject: error
+  });
+  // alert(`Global JS Error: ${message} in ${source} line ${lineno}`); // Intrusive: for hard debugging only
+  return false; 
+};
+
 // --- Supabase Client Initialization ---
 const SUPABASE_URL = 'https://qrhkkeworjtpnznfwtne.supabase.co';    // << REPLACE WITH YOUR ACTUAL URL
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyaGtrZXdvcmp0cG56bmZ3dG5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3NTIzOTEsImV4cCI6MjA2MTMyODM5MX0.r91yGy0MJu1-e884Qbk89S8U1Riyjn4le6fuQz7Rs3E'; // << REPLACE WITH YOUR ACTUAL ANON KEY
@@ -9,10 +23,10 @@ const FLASK_SERVER_URL = 'https://flask.vlkn.in'; // e.g., http://localhost:5000
 let tempHumidityChart;
 let lastFetchedConfig = {}; // To avoid unnecessary UI updates if data hasn't changed
 const NUM_SIMULATED_LEDS = 12;
-let simRingState = { // New object to hold the state for the simulated ring
-    targetMode: 'NONE', // e.g., 'WIPE', 'BLINK', 'SOLID', 'SPIN', 'PULSE', 'CHASE'
-    targetColor: { r: 0, g: 0, b: 0 },
-    wipeCounter: 0,
+let simRingState = { 
+    targetMode: 'NONE', 
+    targetColor: { r: 0, g: 0, b: 0 }, 
+    wipeCounter: 0, 
     blinkCounter: 0, 
     blinkState: false, 
     animationStep: 0, 
@@ -27,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Attempt to Initialize Supabase client
     try {
-        // 'supabase' is the global object from the CDN <script> tag
         if (typeof supabase !== 'undefined' && typeof supabase.createClient === 'function' && 
             SUPABASE_URL && SUPABASE_ANON_KEY && 
             SUPABASE_URL !== 'YOUR_SUPABASE_PROJECT_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY') {
@@ -35,22 +48,28 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Supabase client initialized successfully via DOMContentLoaded.");
         } else if (!SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_PROJECT_URL' || !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
             console.warn("Supabase URL or Anon Key NOT CONFIGURED in script.js. Direct Supabase features (like historical chart) will be disabled.");
-            // alert("Supabase not configured. Chart data may not load."); // Optional: For hard mobile debugging
         } else if (typeof supabase === 'undefined' || typeof supabase.createClient !== 'function') {
             console.error("Supabase library (supabase object or createClient method) not loaded. Check script order in HTML or network. Ensure Supabase CDN script is loaded BEFORE script.js.");
-            // alert("Critical error: Supabase library not found. Page may not work correctly."); // Optional
         }
     } catch (error) {
         console.error("Error initializing Supabase client in DOMContentLoaded:", error);
-        // alert("Error initializing Supabase: " + error.message); // Optional
     }
 
     createSimulatedRgbRing();
-    initChart(); // Initialize chart structure
+    
+    const chartCanvas = document.getElementById('tempHumidityChart');
+    if (chartCanvas) {
+        initChart(); 
+        console.log("Chart initialized.");
+    } else {
+        console.error("Chart canvas element 'tempHumidityChart' not found!");
+    }
 
     // Initial data fetches
     fetchLatestDataAndUpdateUI().catch(err => console.error("Initial fetchLatestData error:", err)); 
-    fetchHistoricalData().catch(err => console.error("Initial fetchHistoricalData error:", err));      
+    setTimeout(() => { // Delay historical data fetch slightly
+        fetchHistoricalData().catch(err => console.error("Initial fetchHistoricalData error:", err)); 
+    }, 500);     
 
     // Periodic updates
     setInterval(fetchLatestDataAndUpdateUI, 3000); 
@@ -59,21 +78,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event Listeners
     const updateBaseConfigBtn = document.getElementById('update-base-config-btn');
     if (updateBaseConfigBtn) updateBaseConfigBtn.addEventListener('click', updateBaseConfiguration);
+    else console.warn("Button 'update-base-config-btn' not found");
     
     const manualModeToggle = document.getElementById('manual-fan-mode-toggle');
     if(manualModeToggle) manualModeToggle.addEventListener('change', handleManualModeToggle);
+    else console.warn("Toggle 'manual-fan-mode-toggle' not found");
     
     const manualFanOnBtn = document.getElementById('manual-fan-on-btn');
     if(manualFanOnBtn) manualFanOnBtn.addEventListener('click', () => sendManualFanSettings(true, true));
+    else console.warn("Button 'manual-fan-on-btn' not found");
     
     const manualFanOffBtn = document.getElementById('manual-fan-off-btn');
     if(manualFanOffBtn) manualFanOffBtn.addEventListener('click', () => sendManualFanSettings(true, false));
+    else console.warn("Button 'manual-fan-off-btn' not found");
     
     const scrollToGraphBtn = document.getElementById('scroll-to-graph-btn');
     if(scrollToGraphBtn) scrollToGraphBtn.addEventListener('click', () => {
         const chartSection = document.getElementById('chart-section');
         if(chartSection) chartSection.scrollIntoView({ behavior: 'smooth' });
+        else console.warn("Chart section 'chart-section' not found for scroll");
     });
+    else console.warn("Button 'scroll-to-graph-btn' not found");
 
     updatePyramidArrowPositions(); 
     window.addEventListener('resize', debounce(updatePyramidArrowPositions, 100)); 
@@ -150,15 +175,13 @@ async function fetchLatestDataAndUpdateUI() {
                 const fanIsOn = reading.fan_on; 
                 const isManual = currentConfig.manual_fan_control_active;
                 if (fanIsOn) derivedEspStatus = isManual ? 'S_OPERATIONAL_FAN_ON_MANUAL' : 'S_OPERATIONAL_FAN_ON_AUTO';
-                else if (reading.temperature > currentConfig.fan_threshold_temp + 2.0 && !isManual) derivedEspStatus = 'S_OPERATIONAL_TEMP_HIGH';
+                else if (reading.temperature !== null && reading.temperature !== undefined && currentConfig.fan_threshold_temp !== undefined && reading.temperature > currentConfig.fan_threshold_temp + 2.0 && !isManual) derivedEspStatus = 'S_OPERATIONAL_TEMP_HIGH';
                 else derivedEspStatus = 'S_OPERATIONAL_FAN_OFF';
             }
             updateSimulatedRgbTarget(derivedEspStatus);
         } else { 
             updateSimulatedRgbTarget('ESP_OFFLINE');
         }
-        // const statusTextEl = document.getElementById('rgb-status-text'); // Moved into updateSimulatedRgbTarget
-        // if (statusTextEl) statusTextEl.textContent = simRingState.statusText;
 
     } catch (error) {
         console.error("Error in fetchLatestDataAndUpdateUI:", error);
@@ -184,7 +207,6 @@ async function fetchHistoricalData() {
         if (chartCanvas) chartCanvas.style.display = 'none';
         return; 
     }
-    // If Supabase client is available, ensure chart is visible and error message is hidden
     if (chartErrorMessageEl) chartErrorMessageEl.style.display = 'none';
     if (chartCanvas && chartCanvas.style.display === 'none') chartCanvas.style.display = 'block';
 
@@ -200,15 +222,15 @@ async function fetchHistoricalData() {
 
         if (error) {
             console.error("Error fetching historical data from Supabase:", error);
-            if (chartErrorMessageEl) { chartErrorMessageEl.textContent = "Error loading chart data."; chartErrorMessageEl.style.display = 'block'; }
+            if (chartErrorMessageEl) { chartErrorMessageEl.textContent = "Error loading chart data: " + error.message; chartErrorMessageEl.style.display = 'block'; }
             return;
         }
 
         if (data && data.length > 0) {
             const sortedData = data.reverse(); 
             const labels = sortedData.map(d => new Date(d.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-            const tempData = sortedData.map(d => d.temperature === null || d.temperature === undefined ? null : parseFloat(d.temperature)); // Handle nulls
-            const humidityData = sortedData.map(d => d.humidity === null || d.humidity === undefined ? null : parseFloat(d.humidity)); // Handle nulls
+            const tempData = sortedData.map(d => d.temperature === null || d.temperature === undefined ? null : parseFloat(d.temperature)); 
+            const humidityData = sortedData.map(d => d.humidity === null || d.humidity === undefined ? null : parseFloat(d.humidity)); 
 
 
             if (tempHumidityChart) {
@@ -228,7 +250,7 @@ async function fetchHistoricalData() {
         }
     } catch (error) {
         console.error("Exception during fetchHistoricalData (Supabase direct):", error);
-        if (chartErrorMessageEl) { chartErrorMessageEl.textContent = "Failed to process chart data."; chartErrorMessageEl.style.display = 'block';}
+        if (chartErrorMessageEl) { chartErrorMessageEl.textContent = "Failed to process chart data: " + error.message; chartErrorMessageEl.style.display = 'block';}
     }
 }
 
@@ -254,7 +276,6 @@ function updateControlInputs(config) {
         updateManualFanButtonActiveState(config.manual_fan_control_active, config.manual_fan_target_state);
     }
 }
-
 function handleManualModeToggle() { 
     const manualModeToggle = document.getElementById('manual-fan-mode-toggle');
     const manualFanButtonsDiv = document.getElementById('manual-fan-buttons');
@@ -269,7 +290,6 @@ function handleManualModeToggle() {
     }
     sendManualFanSettings(isManualModeActive, targetFanState);
 }
-
 function updateManualFanButtonActiveState(isManualMode, targetState) { 
     const onBtn = document.getElementById('manual-fan-on-btn');
     const offBtn = document.getElementById('manual-fan-off-btn');
@@ -277,7 +297,6 @@ function updateManualFanButtonActiveState(isManualMode, targetState) {
     onBtn.classList.remove('active'); offBtn.classList.remove('active');
     if (isManualMode) { if (targetState === true) onBtn.classList.add('active'); else if (targetState === false) offBtn.classList.add('active'); }
 }
-
 async function updateBaseConfiguration() { 
     const thresholdInput = document.getElementById('fan-threshold');
     const brightnessInput = document.getElementById('rgb-brightness');
@@ -298,7 +317,6 @@ async function updateBaseConfiguration() {
         } else { displayMessage('base-config-message', `Error: ${result.error || 'Unknown error'}`, 'error'); }
     } catch (error) { displayMessage('base-config-message', 'Network error.', 'error'); }
 }
-
 async function sendManualFanSettings(manualControlActive, manualFanTargetState) { 
     displayMessage('manual-fan-message', 'Sending fan command...', 'success');
     const payload = { manual_control_active: manualControlActive, manual_fan_state: manualFanTargetState === null ? false : manualFanTargetState };
@@ -321,27 +339,37 @@ function initChart() {
     const ctx = document.getElementById('tempHumidityChart');
     if (!ctx) { console.error("Chart canvas not found!"); return; }
     Chart.defaults.color = '#b0bec5'; Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.08)';
-    tempHumidityChart = new Chart(ctx.getContext('2d'), { type: 'line',
-        data: { labels: [], datasets: [
-            { label: 'Temp (°C)', data: [], borderColor: '#ef5350', backgroundColor: 'rgba(239, 83, 80, 0.2)', tension: 0.3, yAxisID: 'yTemp', pointRadius: 2, pointBackgroundColor: '#ef5350', borderWidth: 1.5 },
-            { label: 'Humidity (%)', data: [], borderColor: '#42a5f5', backgroundColor: 'rgba(66, 165, 245, 0.2)', tension: 0.3, yAxisID: 'yHumidity', pointRadius: 2, pointBackgroundColor: '#42a5f5', borderWidth: 1.5 }
-        ]},
-        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { labels: { color: '#e0e0e0', font: { size: 13 } } }, tooltip: { backgroundColor: 'rgba(10,10,10,0.85)', titleFont: {size:13}, bodyFont:{size:12}, padding:10, borderColor:'#2c2c2c', borderWidth:1 } },
-            scales: {
-                yTemp: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Temp (°C)', color: '#b0bec5', font:{size:12} }, ticks: { color: '#90a4ae', font:{size:11} }, grid: { color: 'rgba(255,255,255,0.06)' } },
-                yHumidity: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Humidity (%)', color: '#b0bec5', font:{size:12} }, ticks: { color: '#90a4ae', font:{size:11} }, grid: { drawOnChartArea: false } },
-                x: { title: { display: true, text: 'Time', color: '#b0bec5', font:{size:12} }, ticks: { color: '#90a4ae', font:{size:11}, maxRotation: 0, autoSkipPadding: 25 }, grid: { color: 'rgba(255,255,255,0.04)' } }
+    try {
+        tempHumidityChart = new Chart(ctx.getContext('2d'), { type: 'line',
+            data: { labels: [], datasets: [
+                { label: 'Temp (°C)', data: [], borderColor: '#ef5350', backgroundColor: 'rgba(239, 83, 80, 0.2)', tension: 0.3, yAxisID: 'yTemp', pointRadius: 2, pointBackgroundColor: '#ef5350', borderWidth: 1.5 },
+                { label: 'Humidity (%)', data: [], borderColor: '#42a5f5', backgroundColor: 'rgba(66, 165, 245, 0.2)', tension: 0.3, yAxisID: 'yHumidity', pointRadius: 2, pointBackgroundColor: '#42a5f5', borderWidth: 1.5 }
+            ]},
+            options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { labels: { color: '#e0e0e0', font: { size: 13 } } }, tooltip: { backgroundColor: 'rgba(10,10,10,0.85)', titleFont: {size:13}, bodyFont:{size:12}, padding:10, borderColor:'#2c2c2c', borderWidth:1 } },
+                scales: {
+                    yTemp: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Temp (°C)', color: '#b0bec5', font:{size:12} }, ticks: { color: '#90a4ae', font:{size:11} }, grid: { color: 'rgba(255,255,255,0.06)' } },
+                    yHumidity: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Humidity (%)', color: '#b0bec5', font:{size:12} }, ticks: { color: '#90a4ae', font:{size:11} }, grid: { drawOnChartArea: false } },
+                    x: { title: { display: true, text: 'Time', color: '#b0bec5', font:{size:12} }, ticks: { color: '#90a4ae', font:{size:11}, maxRotation: 0, autoSkipPadding: 25 }, grid: { color: 'rgba(255,255,255,0.04)' } }
+                }
             }
+        });
+    } catch (e) {
+        console.error("Error initializing Chart.js:", e);
+        const chartErrorMessageEl = document.getElementById('chart-error-message');
+        if (chartErrorMessageEl) {
+            chartErrorMessageEl.textContent = "Could not initialize chart.";
+            chartErrorMessageEl.style.display = 'block';
         }
-    });
+        if(ctx) ctx.style.display = 'none'; // Hide the canvas if chart fails
+    }
 }
 
 // --- Simulated RGB Ring ---
 function createSimulatedRgbRing() { 
     const ring = document.getElementById('simulated-rgb-ring');
-    if (!ring) return;
-    ring.innerHTML = ''; // Clear previous LEDs if any
+    if (!ring) { console.warn("Simulated RGB ring container not found."); return; }
+    ring.innerHTML = ''; 
     const radius = 32; 
     for (let i = 0; i < NUM_SIMULATED_LEDS; i++) {
         const led = document.createElement('div');
@@ -356,21 +384,32 @@ function createSimulatedRgbRing() {
 
 function updateSimulatedRgbTarget(espEquivalentStatus) { 
     const statusTextEl = document.getElementById('rgb-status-text');
-    switch(espEquivalentStatus) { // espEquivalentStatus is a string like "S_WIFI_CONNECTING"
+    switch(espEquivalentStatus) { 
         case 'S_WIFI_CONNECTING': case 'S_WIFI_CONNECTION_FAILED_RETRY':
             simRingState.targetMode = 'SPIN'; simRingState.targetColor = { r: 0, g: 0, b: 200 }; simRingState.statusText = 'WiFi Connecting...';
             break;
-        case 'S_WIFI_CONNECTED_INIT_ANIM': 
-            simRingState.targetMode = 'WIPE'; simRingState.targetColor = { r: 0, g: 0, b: 220 }; simRingState.wipeCounter = 0; simRingState.statusText = 'WiFi Connected!';
+        case 'S_WIFI_CONNECTED_INIT_ANIM': // ESP state that triggers wipe then blink
+            if (simRingState.targetMode !== 'WIPE' && simRingState.targetMode !== 'BLINK') { // Start wipe only if not already in progress
+                simRingState.targetMode = 'WIPE'; 
+                simRingState.targetColor = { r: 0, g: 0, b: 220 }; 
+                simRingState.wipeCounter = 0; 
+            }
+            simRingState.statusText = 'WiFi Connected!';
             break;
         case 'S_OPERATIONAL_FAN_ON_AUTO': case 'S_OPERATIONAL_FAN_ON_MANUAL':
-            simRingState.targetMode = simRingState.targetMode === 'WIPE' && simRingState.wipeCounter < NUM_SIMULATED_LEDS ? 'WIPE' : 'SOLID'; // Continue wipe if in progress
-            simRingState.targetColor = { r: 220, g: 0, b: 0 }; 
+            if (simRingState.targetMode !== 'WIPE' || simRingState.targetColor.r !== 220) { // Only start wipe if not already red or wiping red
+                simRingState.targetMode = 'WIPE';
+                simRingState.targetColor = { r: 220, g: 0, b: 0 };
+                simRingState.wipeCounter = 0;
+            }
             simRingState.statusText = `Fan ON (${espEquivalentStatus.includes('MANUAL') ? 'Manual' : 'Auto'})`;
             break;
         case 'S_OPERATIONAL_FAN_OFF': case 'S_OPERATIONAL_IDLE': 
-            simRingState.targetMode = simRingState.targetMode === 'WIPE' && simRingState.wipeCounter < NUM_SIMULATED_LEDS ? 'WIPE' : 'SOLID';
-            simRingState.targetColor = { r: 0, g: 200, b: 0 }; 
+            if (simRingState.targetMode !== 'WIPE' || simRingState.targetColor.g !== 200) {
+                simRingState.targetMode = 'WIPE';
+                simRingState.targetColor = { r: 0, g: 200, b: 0 };
+                simRingState.wipeCounter = 0;
+            }
             simRingState.statusText = 'Fan OFF - Nominal';
             if(espEquivalentStatus === 'S_OPERATIONAL_IDLE') simRingState.statusText = 'System Nominal';
             break;
@@ -395,27 +434,24 @@ function updateSimulatedRgbTarget(espEquivalentStatus) {
 
 function renderSimulatedLedsV2() { 
     const anim = simRingState; anim.animationStep++;
+    const leds = document.querySelectorAll('#simulated-rgb-ring .simulated-led');
+    if (leds.length !== NUM_SIMULATED_LEDS) return; // Ensure LEDs are created
+
     for (let i = 0; i < NUM_SIMULATED_LEDS; i++) {
-        const ledEl = document.getElementById(`sim-led-${i}`); if (!ledEl) continue;
+        const ledEl = leds[i];
         let r = 10, g = 10, b = 10; 
 
         switch(anim.targetMode) { 
             case 'SOLID': r = anim.targetColor.r; g = anim.targetColor.g; b = anim.targetColor.b; break;
             case 'WIPE':
                 if (anim.wipeCounter === undefined) anim.wipeCounter = 0;
-                // Ensure LEDs before wipeCounter are off or dim, current one is target, rest are off/dim
-                if (i < anim.wipeCounter) {
-                    // Option 1: Keep them lit with target color
-                    // r = anim.targetColor.r; g = anim.targetColor.g; b = anim.targetColor.b;
-                    // Option 2: Or make them a dim version if you want a "trail" to disappear
-                     r = anim.targetColor.r / 3; g = anim.targetColor.g / 3; b = anim.targetColor.b / 3;
-                } else if (i === anim.wipeCounter) {
-                    r = anim.targetColor.r; g = anim.targetColor.g; b = anim.targetColor.b;
-                } // else they remain dim (r=10,g=10,b=10)
-
-                if (anim.animationStep % 2 === 0 && anim.wipeCounter < NUM_SIMULATED_LEDS) anim.wipeCounter++; 
+                if (i <= anim.wipeCounter) { r = anim.targetColor.r; g = anim.targetColor.g; b = anim.targetColor.b; }
+                
+                if (anim.animationStep % 2 === 0 && anim.wipeCounter < NUM_SIMULATED_LEDS) { // Control wipe speed here
+                    anim.wipeCounter++; 
+                }
                 if (anim.wipeCounter >= NUM_SIMULATED_LEDS) { 
-                    if (simRingState.statusText === 'WiFi Connected!') { 
+                    if (simRingState.statusText && simRingState.statusText.toLowerCase().includes('wifi connected')) { 
                         anim.targetMode = 'BLINK'; anim.blinkCounter = NEOPIXEL_MAX_BLINKS; anim.blinkState = true; anim.wipeCounter = 0; 
                     } else { anim.targetMode = 'SOLID'; }
                 }
@@ -423,18 +459,16 @@ function renderSimulatedLedsV2() {
             case 'BLINK':
                 if (anim.blinkCounter === undefined || anim.blinkCounter <= 0) {
                     anim.targetMode = 'SOLID'; 
-                    anim.targetColor = { r: 0, g: 180, b: 0 }; // Default to green after blink
+                    anim.targetColor = { r: 0, g: 180, b: 0 }; 
                 } else {
-                    // Calculate how many animation frames per blink phase
                     const framesPerBlinkPhase = Math.max(1, Math.floor(NEOPIXEL_BLINK_INTERVAL / SIM_NEOPIXEL_ANIMATION_INTERVAL));
-                    if (anim.blinkState) { // ON phase
+                    if (anim.blinkState) { // Current phase is ON
                          r = anim.targetColor.r; g = anim.targetColor.g; b = anim.targetColor.b;
-                    } /* else stays dim off */
+                    } // else stays dim off (r=10,g=10,b=10)
 
-                    // Check if it's time to toggle blinkState and decrement blinkCounter
-                    if (anim.animationStep % framesPerBlinkPhase === 0) {
+                    if (anim.animationStep % framesPerBlinkPhase === 0) { // Time to toggle state
                         anim.blinkState = !anim.blinkState;
-                        if (!anim.blinkState) { // Just finished an ON phase, now OFF, decrement counter
+                        if (!anim.blinkState) { // Just transitioned to OFF, so one ON/OFF cycle part is done
                            anim.blinkCounter--;
                         }
                     }
@@ -476,21 +510,21 @@ function updateDiagramStatusDots(espStatus, flaskStatus, supabaseStatus) {
     setDot('web-dot', 'online');
 }
 
-function getElementConnectionPoint(elementId, svgRect, side = 'center', offset = 0) {
+function getElementConnectionPoint(elementId, svgRect, side = 'center', offsetX = 0, offsetY = 0) {
     const el = document.getElementById(elementId);
     if (!el) return { x: 0, y: 0, valid: false };
     const rect = el.getBoundingClientRect();
     let point = {
-        x: rect.left + rect.width / 2 - svgRect.left,
-        y: rect.top + rect.height / 2 - svgRect.top,
+        x: rect.left + rect.width / 2 - svgRect.left, // Center X
+        y: rect.top + rect.height / 2 - svgRect.top,  // Center Y
         valid: true
     };
 
     switch(side) {
-        case 'top':    point.y = rect.top - svgRect.top - offset; break;
-        case 'bottom': point.y = rect.bottom - svgRect.top + offset; break;
-        case 'left':   point.x = rect.left - svgRect.left - offset; break;
-        case 'right':  point.x = rect.right - svgRect.left + offset; break;
+        case 'top':    point.y = rect.top - svgRect.top - offsetY; break;
+        case 'bottom': point.y = rect.bottom - svgRect.top + offsetY; break;
+        case 'left':   point.x = rect.left - svgRect.left - offsetX; break;
+        case 'right':  point.x = rect.right - svgRect.left + offsetX; break;
     }
     return point;
 }
@@ -500,8 +534,9 @@ function updatePyramidArrowPositions() {
     const svg = document.getElementById('pyramid-arrows-svg');
     if (!svg) return;
     const svgRect = svg.getBoundingClientRect();
+    if (svgRect.width === 0 || svgRect.height === 0) return; // Don't update if SVG isn't rendered
 
-    const arrowOffset = 5; // Offset from node edge
+    const arrowEdgeOffset = 6; // How far from the node edge the arrow should start/end
 
     const points = {
         flask:    getElementConnectionPoint('node-flask', svgRect, 'center'),
@@ -520,32 +555,32 @@ function updatePyramidArrowPositions() {
         }
     };
 
-    // ESP data -> Flask (bottom of Flask)
+    // ESP (bottom-left) data -> Flask (top-tip)
     setLine('line-esp-flask-data', 
-        getElementConnectionPoint('node-esp', svgRect, 'top', arrowOffset), 
-        getElementConnectionPoint('node-flask', svgRect, 'bottom', arrowOffset)
+        getElementConnectionPoint('node-esp', svgRect, 'top', 0, arrowEdgeOffset), 
+        getElementConnectionPoint('node-flask', svgRect, 'bottom', 0, -arrowEdgeOffset) // Connect to bottom of flask
     );
-    // Flask config -> ESP (top of ESP)
+    // Flask config -> ESP
     setLine('line-flask-esp-config', 
-        getElementConnectionPoint('node-flask', svgRect, 'bottom', arrowOffset), 
-        getElementConnectionPoint('node-esp', svgRect, 'top', arrowOffset)
+        getElementConnectionPoint('node-flask', svgRect, 'bottom', 0, -arrowEdgeOffset), // Start from bottom of flask
+        getElementConnectionPoint('node-esp', svgRect, 'top', 0, arrowEdgeOffset) 
     );
 
-    // Flask data -> Supabase (top of Supabase)
+    // Flask data -> Supabase DB (middle-bottom)
     setLine('line-flask-db-data', 
-        getElementConnectionPoint('node-flask', svgRect, 'bottom', arrowOffset), 
-        getElementConnectionPoint('node-supabase', svgRect, 'top', arrowOffset)
+        getElementConnectionPoint('node-flask', svgRect, 'bottom', 0, -arrowEdgeOffset), // From bottom of Flask
+        getElementConnectionPoint('node-supabase', svgRect, 'top', 0, arrowEdgeOffset) // To top of Supabase
     );
-
-    // Flask data -> Web UI (left of Web UI)
+    
+    // Flask data -> Web UI (bottom-right)
     setLine('line-flask-web-data', 
-        getElementConnectionPoint('node-flask', svgRect, 'right', arrowOffset), 
-        getElementConnectionPoint('node-web', svgRect, 'left', arrowOffset)
+        getElementConnectionPoint('node-flask', svgRect, 'bottom', 0, -arrowEdgeOffset), // From bottom of Flask
+        getElementConnectionPoint('node-web', svgRect, 'top', 0, arrowEdgeOffset)    // To top of Web UI
     );
-    // Web UI control -> Flask (right of Flask)
+    // Web UI control -> Flask
     setLine('line-web-flask-control', 
-        getElementConnectionPoint('node-web', svgRect, 'left', arrowOffset), 
-        getElementConnectionPoint('node-flask', svgRect, 'right', arrowOffset)
+        getElementConnectionPoint('node-web', svgRect, 'top', 0, arrowEdgeOffset),    // From top of Web UI
+        getElementConnectionPoint('node-flask', svgRect, 'bottom', 0, -arrowEdgeOffset) // To bottom of Flask
     );
 }
 
