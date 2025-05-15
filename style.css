@@ -1,125 +1,216 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(to right top, #65dfc9, #6cdbeb);
-    color: #333;
+    background: linear-gradient(to right top, #2c3e50, #34495e, #2c3e50); /* Dark blue-grey gradient */
+    color: #ecf0f1; /* Light grey text */
     margin: 0;
     padding: 20px;
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: flex-start;
+    font-size: 16px;
 }
 
 .container {
-    width: 90%;
+    width: 95%;
     max-width: 1200px;
 }
 
-header {
+header h1 {
     text-align: center;
     margin-bottom: 30px;
-    color: white;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    color: #3498db; /* Bright blue for title */
+    text-shadow: 0px 1px 3px rgba(0,0,0,0.3);
+    font-size: 2.5em;
+    font-weight: 300;
 }
 
 .card {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 15px;
-    padding: 20px;
-    margin-bottom: 20px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(41, 52, 65, 0.55); /* Darker, translucent card */
+    border-radius: 12px;
+    padding: 20px 25px;
+    margin-bottom: 25px;
+    backdrop-filter: blur(10px) saturate(120%);
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .card h2 {
     margin-top: 0;
-    color: #2c3e50;
-    border-bottom: 1px solid rgba(255,255,255,0.3);
+    color: #2980b9; /* Slightly lighter blue for card titles */
+    border-bottom: 1px solid rgba(255,255,255,0.1);
     padding-bottom: 10px;
+    font-weight: 400;
+    font-size: 1.6em;
+}
+.card h3 {
+    color: #bdc3c7; /* Lighter grey for subheadings */
+    font-weight: 400;
+    margin-top: 15px;
+    margin-bottom: 10px;
 }
 
 .status-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
     margin-bottom: 20px;
 }
 .status-grid div { font-size: 1.1em; }
-
-.controls div {
-    margin-bottom: 15px;
+.status-grid span {
+    color: #1abc9c; /* Teal for values */
+    font-weight: 500;
 }
+#fan-control-mode { color: #f1c40f; } /* Yellow for control mode */
+
+
+.controls div { margin-bottom: 18px; }
 .controls label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
+    color: #bdc3c7; /* Lighter grey for labels */
+    font-size: 0.95em;
 }
-.controls input {
-    padding: 8px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    background: rgba(255,255,255,0.7);
-    width: calc(100% - 20px);
+.controls input[type="number"], .controls input[type="text"] {
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(0,0,0,0.2);
+    color: #ecf0f1;
+    width: calc(100% - 26px);
+    box-sizing: border-box;
+    font-size: 1em;
 }
-.controls button {
-    padding: 10px 15px;
+.controls input[type="number"]:focus, .controls input[type="text"]:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
+}
+.controls button, .toggle-button {
+    padding: 10px 18px;
     background-color: #3498db;
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    font-size: 1em;
+    margin-top: 5px; /* Spacing for button groups */
 }
-.controls button:hover {
-    background-color: #2980b9;
+.controls button:hover, .toggle-button:hover { background-color: #2980b9; }
+.controls button:active, .toggle-button:active { transform: scale(0.97); }
+
+.toggle-button { margin-right: 10px; }
+.toggle-button.active {
+    background-color: #2ecc71; /* Green for active ON state */
 }
+.toggle-button.active:hover { background-color: #27ae60; }
+
+/* Manual Fan Control Specific Styles */
+.manual-fan-controls {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: 20px;
+    padding-top: 15px;
+}
+.switch-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+.manual-mode-label { font-size: 1.1em !important; color: #ecf0f1 !important; margin-right: 12px; }
+.switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+.switch input { display: none; }
+.slider {
+  position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #7f8c8d; /* Grey slider off */
+  transition: .3s; border-radius: 28px;
+}
+.slider:before {
+  position: absolute; content: ""; height: 20px; width: 20px;
+  left: 4px; bottom: 4px; background-color: white;
+  transition: .3s; border-radius: 50%;
+}
+input:checked + .slider { background-color: #2ecc71; } /* Green slider on */
+input:checked + .slider:before { transform: translateX(22px); }
+
+#base-config-message, #manual-fan-message {
+    margin-top: 10px;
+    font-size: 0.9em;
+    min-height: 1.2em; /* Prevent layout shift */
+}
+.message-success { color: #2ecc71; }
+.message-error { color: #e74c3c; }
 
 /* Live Diagram Styles */
-.live-diagram {
-    text-align: center;
-    position: relative; /* For absolute positioning of arrows if needed */
-}
+.live-diagram { text-align: center; margin-top: 10px; position: relative; }
 .component {
     display: inline-block;
-    background: rgba(0,0,0,0.1);
-    padding: 10px 15px;
-    border-radius: 8px;
-    margin: 10px;
-    border: 1px solid rgba(0,0,0,0.2);
+    background: rgba(0,0,0,0.2);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 5px;
+    border: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.9em;
+    position: relative; /* For arrows */
 }
 .status-dot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    margin-left: 8px;
-    background-color: grey; /* Default offline */
+    display: inline-block; width: 10px; height: 10px;
+    border-radius: 50%; margin-left: 8px;
+    background-color: #7f8c8d; /* Default offline/unknown */
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
 }
-.status-dot.online { background-color: #2ecc71; }
-.status-dot.offline { background-color: #e74c3c; }
-.status-dot.degraded { background-color: #f39c12; }
+.status-dot.online { background-color: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
+.status-dot.offline { background-color: #e74c3c; box-shadow: 0 0 8px #e74c3c;}
+.status-dot.degraded { background-color: #f39c12; box-shadow: 0 0 8px #f39c12;}
 
 .arrow {
-    display: inline-block;
-    font-size: 1.5em;
-    color: #555;
-    margin: 0 5px;
-    /* Basic animation placeholder */
-    opacity: 0.3; /* Dimmed when "offline" */
+    display: inline-block; font-size: 1.8em; color: #7f8c8d;
+    margin: 0 3px; vertical-align: middle; opacity: 0.5;
+    transition: opacity 0.3s ease, color 0.3s ease;
 }
 .arrow.active {
-    opacity: 1;
+    opacity: 1; color: #1abc9c; /* Teal for active arrows */
     animation: pulseArrow 1.5s infinite ease-in-out;
 }
-
 @keyframes pulseArrow {
-    0%, 100% { transform: scale(1); color: #333; }
-    50% { transform: scale(1.1); color: #3498db; }
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+/* Arrow positioning (example - adjust with absolute positioning if needed for complex layouts) */
+.esp-to-flask {}
+.flask-to-supabase {}
+.flask-to-web { transform: scaleX(-1); } /* Flip for bi-directional appearance */
+.web-to-flask {}
+
+
+/* Chart.js Dark Theme */
+.charts { padding-bottom: 30px; } /* Ensure space for chart */
+#tempHumidityChart {
+    background-color: rgba(0,0,0,0.15);
+    border-radius: 8px;
+    padding: 10px;
+    max-height: 400px; /* Control chart height */
 }
 
-/* Responsive adjustments */
+footer {
+    text-align: center;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    color: #7f8c8d;
+    font-size: 0.9em;
+}
+
 @media (max-width: 768px) {
-    .status-grid {
-        grid-template-columns: 1fr; /* Stack on smaller screens */
-    }
+    body { font-size: 14px; }
+    header h1 { font-size: 2em; }
+    .card h2 { font-size: 1.4em; }
+    .status-grid { grid-template-columns: 1fr; } /* Stack on smaller screens */
+    .live-diagram .component { display: block; margin: 8px auto; }
+    .live-diagram .arrow { display: block; margin: 5px auto; transform: rotate(90deg); }
+    .live-diagram .arrow.flask-to-web { transform: rotate(90deg) scaleY(-1); }
+    .live-diagram .arrow.web-to-flask { transform: rotate(90deg); }
+
+
 }
